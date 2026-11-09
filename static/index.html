@@ -19,6 +19,7 @@
     </div>
     <div class="top-right">
       <span class="pill" id="pill"><span class="dot"></span><span id="pill-text">Connecting</span></span>
+      <span class="pill" id="probe-pill" hidden><span class="dot"></span><span id="probe-pill-text"></span></span>
       <div class="seg" role="group" aria-label="Temperature unit">
         <button data-unit="C" aria-pressed="true">°C</button>
         <button data-unit="F" aria-pressed="false">°F</button>
@@ -32,12 +33,17 @@
 
   <section class="tiles" aria-label="Current readings">
     <article class="tile" data-key="temperature_c">
-      <h2>Temperature</h2>
+      <h2 title="BME688">Air temp</h2>
+      <p class="val"><span class="num">–</span><span class="unit" data-temp-unit>°C</span></p>
+      <p class="range">–</p>
+    </article>
+    <article class="tile" data-key="probe_temp_c">
+      <h2 title="DS18B20 1-wire probe">Probe temp</h2>
       <p class="val"><span class="num">–</span><span class="unit" data-temp-unit>°C</span></p>
       <p class="range">–</p>
     </article>
     <article class="tile" data-key="humidity_pct">
-      <h2>Relative humidity</h2>
+      <h2>Humidity</h2>
       <p class="val"><span class="num">–</span><span class="unit">%</span></p>
       <p class="range">–</p>
     </article>
@@ -60,7 +66,7 @@
     <article class="tile" data-key="dew_point_c">
       <h2>Dew point</h2>
       <p class="val"><span class="num">–</span><span class="unit" data-temp-unit>°C</span></p>
-      <p class="range">Derived from temp + RH</p>
+      <p class="range">From air temp + RH</p>
     </article>
   </section>
 

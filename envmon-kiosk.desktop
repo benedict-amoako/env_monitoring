@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Environment Monitor (kiosk)
+Comment=Show the environmental monitoring dashboard full-screen at login
+Exec=/home/fais-rpi-1/environmental_monitoring/kiosk.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true

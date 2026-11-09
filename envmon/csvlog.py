@@ -28,6 +28,7 @@ FIELDS = [
     "gas_resistance_ohm",
     "gas_valid",
     "heat_stable",
+    "probe_temp_c",
 ]
 HEADER = ",".join(FIELDS) + "\n"
 
@@ -112,6 +113,7 @@ class SessionCsvLogger:
             "" if r.gas_resistance_ohm is None else f"{r.gas_resistance_ohm}",
             str(int(r.gas_valid)),
             str(int(r.heat_stable)),
+            "" if r.probe_temp_c is None else f"{r.probe_temp_c}",
         ]) + "\n"
         with self._lock:
             if not self.active or self._fh is None:

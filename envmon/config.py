@@ -25,6 +25,9 @@ def load() -> dict:
         "temp_offset_c": float(os.environ.get("ENVMON_TEMP_OFFSET", "0")),
         "aq_burn_in_s": int(os.environ.get("ENVMON_AQ_BURN_IN", "300")),
         "simulate": _bool("ENVMON_SIMULATE"),
+        # DS18B20 probe on the 1-wire bus. Leave the id empty to use the first probe found.
+        "ds18b20_enabled": _bool("ENVMON_DS18B20", True),
+        "ds18b20_id": os.environ.get("ENVMON_DS18B20_ID", "").strip() or None,
         # A log file is split into a new _partNNN file before it exceeds this size.
         "log_max_bytes": int(float(os.environ.get("ENVMON_LOG_MAX_MB", "1024")) * 1024 * 1024),
         "log_dir": data_dir / "logs",

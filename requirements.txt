@@ -5,6 +5,8 @@
 #   - I2C enabled:  sudo raspi-config nonint do_i2c 0   (or dtparam=i2c_arm=on in /boot/firmware/config.txt)
 #   - user in the "i2c" group:  sudo usermod -aG i2c $USER
 #   - optional, for bus scanning:  sudo apt install i2c-tools
+#   - DS18B20 probe: 1-wire on GPIO17 -> add  dtoverlay=w1-gpio,gpiopin=17  to /boot/firmware/config.txt
+#     and reboot. Read through the kernel's sysfs interface, so no extra Python package is needed.
 
 # Sensor
 bme680==2.0.0          # Pimoroni driver; supports BME680 and BME688

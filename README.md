@@ -16,6 +16,20 @@ It has a light/dark theme toggle and starts and stops CSV logging on demand.
 
 Check that the sensor is visible: `i2cdetect -y 1` should show `76` (or `77`).
 
+### DS18B20 probe (1-wire on GPIO17)
+
+| DS18B20 | Pi 5 header |
+|---------|-------------|
+| VDD (red) | Pin 1 or 17 (3.3 V) |
+| GND (black) | Pin 9 / any GND |
+| DATA (yellow) | Pin 11 (GPIO 17), with a 4.7 kΩ pull-up to 3.3 V |
+
+Enable the bus in `/boot/firmware/config.txt` with `dtoverlay=w1-gpio,gpiopin=17`, then reboot.
+The probe appears as `/sys/bus/w1/devices/28-xxxxxxxxxxxx`
+(`cat /sys/bus/w1/devices/28-*/temperature` prints millidegrees). The app finds it automatically.
+If the probe is missing, the dashboard says so, the CSV column stays blank, and the app keeps
+looking for it every 10 s.
+
 ## Setup
 
 ```bash
@@ -34,6 +48,21 @@ python3 -m venv .venv                    # already done
 Open `http://<pi-ip>:8000` (or `http://fais-rpi-1.local:8000`) from any device on the LAN.
 To use it as a desktop display on the Pi, open the same URL in Chromium
 (`chromium --kiosk http://localhost:8000` for full screen).
+
+### Full-screen on the Pi's own monitor (kiosk)
+
+`kiosk.sh` opens the dashboard in full-screen Chromium. It waits for a monitor to be
+connected and for the server to answer, and uses its own browser profile. To run it at every desktop login:
+
+```bash
+mkdir -p ~/.config/autostart
+cp envmon-kiosk.desktop ~/.config/autostart/
+```
+
+Requires desktop autologin (`sudo raspi-config` → System → Boot / Auto Login → Desktop Autologin).
+Press **Alt+F4** to leave kiosk mode; it reopens at the next login. Delete
+`~/.config/autostart/envmon-kiosk.desktop` to turn it off. The port is read from the `envmon`
+service, or set `ENVMON_KIOSK_URL`.
 
 ### Start automatically on boot
 
@@ -63,6 +92,7 @@ in the dashboard's *Raw data logs* panel (or `POST /api/logging/start` and `/api
 | `pressure_psi` | psi (same reading converted; the dashboard shows psi) |
 | `gas_resistance_ohm` | Ω; blank while the hotplate is not yet stable |
 | `gas_valid`, `heat_stable` | sensor status flags (1/0) |
+| `probe_temp_c` | DS18B20 probe °C; blank if the probe isn't connected |
 
 Lines are flushed every row and fsync'd to the SD card once a minute and on stop.
 Files can be downloaded or deleted from the dashboard (Delete asks for a second click to confirm;
@@ -83,6 +113,8 @@ your LAN can start or stop logging.
 | `ENVMON_AQ_BURN_IN` | `300` | seconds before the air-quality score starts |
 | `ENVMON_DATA_DIR` | `./data` | where `logs/` is written |
 | `ENVMON_LOG_MAX_MB` | `1024` | split a log into a new part file at this size |
+| `ENVMON_DS18B20` | `1` | `0` turns off the 1-wire probe |
+| `ENVMON_DS18B20_ID` | *(first found)* | pick a probe, e.g. `28-092330496fdb` |
 | `ENVMON_SIMULATE` | `0` | `1` = fake data for UI work (logs to `simulated_*.csv`) |
 
 ## Notes
@@ -101,6 +133,7 @@ your LAN can start or stop logging.
 ```
 run.py              entry point (waitress server + sampler thread)
 envmon/sensor.py    BME688 driver wrapper (+ simulator)
+envmon/ds18b20.py   DS18B20 1-wire reader (own thread; a 12-bit read takes ~750 ms)
 envmon/monitor.py   1 Hz sampler, 24 h in-memory history, CSV backfill
 envmon/csvlog.py    session CSV writer (start/stop, 1 GB split)
 envmon/derived.py   dew point + air-quality estimate

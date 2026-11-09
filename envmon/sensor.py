@@ -22,6 +22,7 @@ class Reading:
     gas_resistance_ohm: float | None   # None until the hotplate reading is valid
     gas_valid: bool
     heat_stable: bool
+    probe_temp_c: float | None = None  # DS18B20 on 1-wire, filled in by the Monitor
 
     def as_dict(self) -> dict:
         return asdict(self)

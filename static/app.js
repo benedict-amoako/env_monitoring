@@ -13,7 +13,6 @@ let hoverT = null;            // shared crosshair time across all charts
 let historyTimer = null;
 
 const REFRESH = { "15m": 2000, "1h": 5000, "6h": 30000, "24h": 60000 };
-const RANGE_LABEL = { "15m": "15 min", "1h": "1 hour", "6h": "6 hours", "24h": "24 hours" };
 
 const HPA_TO_PSI = 0.0145037738;
 const toF = (c) => c * 9 / 5 + 32;
@@ -21,7 +20,8 @@ const tempConv = (v) => (unit === "F" ? toF(v) : v);
 const tempUnit = () => (unit === "F" ? "°F" : "°C");
 
 const METRICS = {
-  temperature_c:      { title: "Temperature",        unit: tempUnit,  conv: tempConv,        dec: 1, minSpan: 1 },
+  temperature_c:      { title: "Temperature (BME688)", unit: tempUnit, conv: tempConv,       dec: 1, minSpan: 1 },
+  probe_temp_c:       { title: "Probe temperature (DS18B20)", unit: tempUnit, conv: tempConv, dec: 2, minSpan: 1 },
   humidity_pct:       { title: "Relative humidity",  unit: () => "%", conv: (v) => v,         dec: 1, minSpan: 4 },
   pressure_hpa:       { title: "Pressure",           unit: () => "psi", conv: (v) => v * HPA_TO_PSI, dec: 3, minSpan: 0.03 },
   gas_resistance_ohm: { title: "Gas resistance",     unit: () => "kΩ", conv: (v) => v / 1000, dec: 1, minSpan: 2 },
@@ -132,10 +132,22 @@ function renderStatus() {
     pill.classList.add("warn");
     pill.title = status.error || "";
   }
+  renderProbePill(status.probe);
   const parts = [`Sampling every ${status.interval_s} s`];
   if (status.error) parts.push(`⚠ ${status.error}`);
+  if (status.probe?.error) parts.push(`⚠ ${status.probe.error}`);
   sub.textContent = parts.join(" · ");
   renderLogging(status.logging);
+}
+
+function renderProbePill(probe) {
+  const pill = document.getElementById("probe-pill");
+  pill.hidden = !probe;                       // probe support disabled in config
+  if (!probe) return;
+  pill.className = `pill ${probe.online ? "live" : "warn"}`;
+  document.getElementById("probe-pill-text").textContent =
+    probe.online ? "Probe · DS18B20" : "Probe not found";
+  pill.title = probe.error || probe.id || "";
 }
 
 // ------------------------------------------------------------------ logging control
@@ -187,9 +199,16 @@ function renderTiles() {
     }
     num.textContent = fmt(v == null ? null : m.conv(v), m.dec);
 
+    if (key === "probe_temp_c") {
+      tile.hidden = status != null && !status.probe;          // disabled via ENVMON_DS18B20=0
+      if (status?.probe && !status.probe.online) {
+        rangeEl.textContent = "Probe not connected";
+        return;
+      }
+    }
     const s = hist?.stats?.[key];
     if (s && s.min != null) {
-      rangeEl.textContent = `${RANGE_LABEL[range]}: ${fmt(m.conv(s.min), m.dec)} – ${fmt(m.conv(s.max), m.dec)}`;
+      rangeEl.textContent = `${range}: ${fmt(m.conv(s.min), m.dec)} – ${fmt(m.conv(s.max), m.dec)}`;
     } else {
       rangeEl.textContent = key === "gas_resistance_ohm" && L && v == null ? "Heater warming up…"
         : key === "air_quality" ? "" : "–";
@@ -206,7 +225,7 @@ function renderTiles() {
   } else if (L && L.aq_burn_in_remaining_s > 0) {
     const s = L.aq_burn_in_remaining_s;
     badge.dataset.s = "cal";
-    badge.textContent = `Calibrating · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} left`;
+    badge.textContent = `Calibrating · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
     badge.hidden = false;
   } else {
     badge.hidden = true;
@@ -310,7 +329,7 @@ function drawChart(c) {
   if (m.fixed) [lo, hi] = m.fixed;
   else if (present.length) {
     lo = Math.min(...present); hi = Math.max(...present);
-    const span = Math.max(hi - lo, m.minSpan * (c.key === "temperature_c" && unit === "F" ? 1.8 : 1));
+    const span = Math.max(hi - lo, m.minSpan * (m.conv === tempConv && unit === "F" ? 1.8 : 1));
     const mid = (lo + hi) / 2;
     lo = mid - span * 0.6; hi = mid + span * 0.6;
   } else { lo = 0; hi = 1; }

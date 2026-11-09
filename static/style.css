@@ -80,12 +80,12 @@ h2 { margin: 0; }
 .seg button:hover { background: var(--hover); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--page); }
 
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
 .tile, .card, .chart { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
 .tile { padding: 14px 16px; min-width: 0; }
 .tile h2 { font-size: 13px; font-weight: 500; color: var(--ink-2); }
 .tile .val { margin: 6px 0 2px; display: flex; align-items: baseline; gap: 5px; }
-.tile .num { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+.tile .num { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
 .tile .unit { color: var(--ink-2); font-size: 14px; }
 .tile .range { color: var(--muted); font-size: 12px; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
 .est { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; margin-left: 2px; }

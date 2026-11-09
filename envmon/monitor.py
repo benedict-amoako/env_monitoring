@@ -11,14 +11,16 @@ import time
 from collections import deque
 
 from .csvlog import SessionCsvLogger
+from .ds18b20 import DS18B20Poller
 from .derived import AirQualityEstimator, aq_status, dew_point_c
 from .sensor import BME688Sensor, SensorError, SimulatedSensor
 
 log = logging.getLogger(__name__)
 
 HISTORY_SECONDS = 24 * 3600
-# history row: (epoch, temp, hum, pressure, gas, aq)
-FIELDS = ("temperature_c", "humidity_pct", "pressure_hpa", "gas_resistance_ohm", "air_quality")
+# history row: (epoch, temp, hum, pressure, gas, aq, probe_temp)
+FIELDS = ("temperature_c", "humidity_pct", "pressure_hpa", "gas_resistance_ohm", "air_quality",
+          "probe_temp_c")
 
 
 class Monitor:
@@ -36,17 +38,22 @@ class Monitor:
         self.latest: dict | None = None
         self.started_at = time.time()
         self.read_errors = 0
+        self.probe = DS18B20Poller(cfg["ds18b20_id"]) if cfg["ds18b20_enabled"] else None
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, name="sampler", daemon=True)
 
     # ---------------------------------------------------------------- lifecycle
     def start(self) -> None:
         self._backfill_from_csv()
+        if self.probe:
+            self.probe.start()
         self._thread.start()
 
     def stop(self) -> None:
         self._stop.set()
         self._thread.join(timeout=3)
+        if self.probe:
+            self.probe.stop()
         self.logger.close()
 
     def _connect(self) -> None:
@@ -98,6 +105,7 @@ class Monitor:
     def _sample(self) -> None:
         r = self.sensor.read()
         r.temperature_c = round(r.temperature_c + self.cfg["temp_offset_c"], 2)
+        r.probe_temp_c = self.probe.latest() if self.probe else None
         self.logger.write(r)
 
         score = self.aq.update(r.gas_resistance_ohm, r.humidity_pct)
@@ -112,7 +120,7 @@ class Monitor:
         with self.lock:
             self.latest = latest
             self.history.append((r.timestamp, r.temperature_c, r.humidity_pct,
-                                 r.pressure_hpa, r.gas_resistance_ohm, score))
+                                 r.pressure_hpa, r.gas_resistance_ohm, score, r.probe_temp_c))
         self.sensor_error = None
 
     # ---------------------------------------------------------------- startup
@@ -150,8 +158,10 @@ class Monitor:
                     if ts < cutoff:
                         continue
                     gas = row.get("gas_resistance_ohm") or None
+                    probe = row.get("probe_temp_c") or None       # absent in older files
                     rows.append((ts, float(row["temperature_c"]), float(row["humidity_pct"]),
-                                 float(row["pressure_hpa"]), float(gas) if gas else None, None))
+                                 float(row["pressure_hpa"]), float(gas) if gas else None, None,
+                                 float(probe) if probe else None))
                 except (KeyError, ValueError, TypeError):
                     continue                                # header row / partial line
         rows.sort(key=lambda x: x[0])
@@ -172,6 +182,7 @@ class Monitor:
             "error": self.sensor_error,
             "uptime_s": int(time.time() - self.started_at),
             "logging": self.logger.state(),
+            "probe": self.probe.status() if self.probe else None,
             "interval_s": self.interval,
             "latest": latest,
             "server_time": time.time(),
