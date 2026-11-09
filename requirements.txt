@@ -1,0 +1,23 @@
+# Environmental monitoring dashboard - Python dependencies
+# Install with:  .venv/bin/pip install -r requirements.txt
+#
+# System prerequisites (Raspberry Pi OS):
+#   - I2C enabled:  sudo raspi-config nonint do_i2c 0   (or dtparam=i2c_arm=on in /boot/firmware/config.txt)
+#   - user in the "i2c" group:  sudo usermod -aG i2c $USER
+#   - optional, for bus scanning:  sudo apt install i2c-tools
+
+# Sensor
+bme680==2.0.0          # Pimoroni driver; supports BME680 and BME688
+smbus2==0.6.1          # I2C transport
+
+# Web dashboard
+Flask==3.1.3
+waitress==3.0.2        # production WSGI server
+
+# Flask's own dependencies, pinned for reproducible installs
+blinker==1.9.0
+click==8.5.1
+itsdangerous==2.2.0
+Jinja2==3.1.6
+MarkupSafe==3.0.4
+Werkzeug==3.1.9

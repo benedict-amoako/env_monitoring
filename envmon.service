@@ -1,0 +1,20 @@
+[Unit]
+Description=BME688 environmental monitoring dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=fais-rpi-1
+Group=i2c
+WorkingDirectory=/home/fais-rpi-1/environmental_monitoring
+ExecStart=/home/fais-rpi-1/environmental_monitoring/.venv/bin/python run.py
+# Optional overrides (see README):
+#Environment=ENVMON_PORT=8000
+#Environment=ENVMON_TEMP_OFFSET=-1.5
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

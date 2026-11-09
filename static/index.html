@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Environment Monitor</title>
+<script>
+  // Apply the saved theme before first paint to avoid a flash.
+  try { const t = localStorage.getItem("envmon.theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+</script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div>
+      <h1>Environment Monitor</h1>
+      <p class="sub" id="sub">Connecting…</p>
+    </div>
+    <div class="top-right">
+      <span class="pill" id="pill"><span class="dot"></span><span id="pill-text">Connecting</span></span>
+      <div class="seg" role="group" aria-label="Temperature unit">
+        <button data-unit="C" aria-pressed="true">°C</button>
+        <button data-unit="F" aria-pressed="false">°F</button>
+      </div>
+      <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">
+        <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="tiles" aria-label="Current readings">
+    <article class="tile" data-key="temperature_c">
+      <h2>Temperature</h2>
+      <p class="val"><span class="num">–</span><span class="unit" data-temp-unit>°C</span></p>
+      <p class="range">–</p>
+    </article>
+    <article class="tile" data-key="humidity_pct">
+      <h2>Relative humidity</h2>
+      <p class="val"><span class="num">–</span><span class="unit">%</span></p>
+      <p class="range">–</p>
+    </article>
+    <article class="tile" data-key="pressure_hpa">
+      <h2>Pressure</h2>
+      <p class="val"><span class="num">–</span><span class="unit">psi</span></p>
+      <p class="range">–</p>
+    </article>
+    <article class="tile" data-key="gas_resistance_ohm">
+      <h2>Gas resistance</h2>
+      <p class="val"><span class="num">–</span><span class="unit">kΩ</span></p>
+      <p class="range">–</p>
+    </article>
+    <article class="tile" data-key="air_quality">
+      <h2>Air quality <span class="est">est.</span></h2>
+      <p class="val"><span class="num">–</span><span class="unit">/ 100</span></p>
+      <p class="badge" id="aq-badge" hidden></p>
+      <p class="range">–</p>
+    </article>
+    <article class="tile" data-key="dew_point_c">
+      <h2>Dew point</h2>
+      <p class="val"><span class="num">–</span><span class="unit" data-temp-unit>°C</span></p>
+      <p class="range">Derived from temp + RH</p>
+    </article>
+  </section>
+
+  <div class="toolbar">
+    <h2 class="section">History</h2>
+    <div class="seg" role="group" aria-label="Time range" id="ranges">
+      <button data-range="15m" aria-pressed="false">15 min</button>
+      <button data-range="1h" aria-pressed="true">1 hour</button>
+      <button data-range="6h" aria-pressed="false">6 hours</button>
+      <button data-range="24h" aria-pressed="false">24 hours</button>
+    </div>
+  </div>
+
+  <section class="charts" id="charts"></section>
+
+  <section class="card logs">
+    <div class="logs-head">
+      <h2 class="section">Raw data logs</h2>
+      <button class="btn" id="log-btn" type="button" disabled>Start logging</button>
+    </div>
+    <p class="log-error" id="log-error" role="alert" hidden></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>File</th><th class="r">Size</th><th></th></tr></thead>
+        <tbody id="log-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="muted">
+    Air quality is an open-source estimate (gas resistance vs. a self-learning clean-air baseline, plus humidity),
+    not Bosch's BSEC IAQ. Higher gas resistance means fewer VOCs. A new sensor needs hours to days of burn-in
+    before gas readings settle.
+  </footer>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
